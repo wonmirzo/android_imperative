@@ -36,7 +36,7 @@ class TVShowAdapter(var activity: MainActivity, private var items: ArrayList<TVS
 
         fun onBind(tvShow: TVShow) {
             Glide.with(activity)
-                .load(tvShow.imageThumbnailPath)
+                .load(tvShow.image_thumbnail_path)
                 .into(binding.ivMovie)
 
             binding.tvName.text = tvShow.name
