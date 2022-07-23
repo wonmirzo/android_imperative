@@ -3,7 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/user/AndroidStudioProjects/android_imperative/app/src/main/res/layout/activity_details.xml" value="0.27447916666666666" />
         <entry key="..\:/Users/user/AndroidStudioProjects/android_imperative/app/src/main/res/layout/activity_main.xml" value="0.27447916666666666" />
+        <entry key="..\:/Users/user/AndroidStudioProjects/android_imperative/app/src/main/res/layout/item_tv_short.xml" value="0.205078125" />
         <entry key="..\:/Users/user/AndroidStudioProjects/android_imperative/app/src/main/res/layout/item_tv_show.xml" value="0.27447916666666666" />
       </map>
     </option>

@@ -1,8 +1,10 @@
 package com.wonmirzo.android_imperative.di
 
+import android.app.Application
+import com.wonmirzo.android_imperative.db.AppDatabase
+import com.wonmirzo.android_imperative.db.TVShowDao
+import com.wonmirzo.android_imperative.network.Server
 import com.wonmirzo.android_imperative.network.Server.IS_TESTER
-import com.wonmirzo.android_imperative.network.Server.SERVER_DEVELOPMENT
-import com.wonmirzo.android_imperative.network.Server.SERVER_PRODUCTION
 import com.wonmirzo.android_imperative.network.TVShowService
 import dagger.Module
 import dagger.Provides
@@ -16,13 +18,13 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 class AppModule {
 
-    /*
-    *  Retrofit Related
-    * */
+    /**
+     * Retrofit Related
+     */
     @Provides
     fun server(): String {
-        if (IS_TESTER) return SERVER_DEVELOPMENT
-        return SERVER_PRODUCTION
+        if (IS_TESTER) return Server.getDevelopment()
+        return Server.getProduction()
     }
 
     @Provides
@@ -39,8 +41,19 @@ class AppModule {
         return retrofitClient().create(TVShowService::class.java)
     }
 
+    /**
+     * Room Related
+     */
 
-    /*
-    *  Room Related
-    * */
+    @Provides
+    @Singleton
+    fun appDatabase(context: Application): AppDatabase {
+        return AppDatabase.getAppDBInstance(context)
+    }
+
+    @Provides
+    @Singleton
+    fun tvShowDao(appDatabase: AppDatabase): TVShowDao {
+        return appDatabase.getTVShowDao()
+    }
 }

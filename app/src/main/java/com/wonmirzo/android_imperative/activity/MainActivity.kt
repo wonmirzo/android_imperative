@@ -1,58 +1,81 @@
 package com.wonmirzo.android_imperative.activity
 
+import android.content.Intent
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityOptionsCompat
+import androidx.core.view.ViewCompat
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.wonmirzo.android_imperative.adapter.TVShowAdapter
-import com.wonmirzo.android_imperative.databinding.ActivityMainBinding
 import com.wonmirzo.android_imperative.model.TVShow
-import com.wonmirzo.android_imperative.utils.Logger
 import com.wonmirzo.android_imperative.viewmodel.MainViewModel
-import dagger.hilt.android.AndroidEntryPoint
+import com.wonmirzo.android_imperative.databinding.ActivityMainBinding
+import com.wonmirzo.android_imperative.utils.Logger
 
-@AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
     private val TAG = MainActivity::class.java.simpleName
-
-    private val viewModel: MainViewModel by viewModels()
-    private lateinit var binding: ActivityMainBinding
-    private lateinit var adapter: TVShowAdapter
+    val viewModel: MainViewModel by viewModels()
+    lateinit var binding: ActivityMainBinding
+    lateinit var adapter: TVShowAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityMainBinding.inflate(LayoutInflater.from(this))
         setContentView(binding.root)
+
         initViews()
     }
 
     private fun initViews() {
         initObserves()
-
-        val lm = GridLayoutManager(this, 2)
-        binding.rvHome.layoutManager = lm
+        val glm = GridLayoutManager(this, 2)
+        binding.rvHome.layoutManager = glm
         refreshAdapter(ArrayList())
 
         binding.rvHome.addOnScrollListener(object : RecyclerView.OnScrollListener() {
             override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 super.onScrolled(recyclerView, dx, dy)
-                if (lm.findLastVisibleItemPosition() == viewModel.tvShowsFromApi.value!!.size - 1) {
+                if (glm.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 1) {
                     val nextPage = viewModel.tvShowPopular.value!!.page + 1
-                    val totalPage = viewModel.tvShowPopular.value!!.pages
-                    if (nextPage <= totalPage) {
-                        viewModel.apiTVShowPopular(nextPage)
-                    }
+                    Logger.d(TAG, nextPage.toString())
+                    viewModel.apiTVShowPopular(nextPage)
                 }
             }
         })
-
-        binding.btnFab.setOnClickListener {
+        binding.bFab.setOnClickListener {
             binding.rvHome.smoothScrollToPosition(0)
         }
 
         viewModel.apiTVShowPopular(1)
+    }
+
+    private fun initObserves() {
+        // Retrofit Related
+        viewModel.tvShowsFromApi.observe(this, {
+            Logger.d(TAG, it.size.toString())
+            adapter.setNewTVShows(it)
+        })
+        viewModel.errorMessage.observe(this, {
+            Logger.d(TAG, it.toString())
+        })
+        viewModel.isLoading.observe(this, Observer {
+            Logger.d(TAG, it.toString())
+            if (viewModel.isLoading.value == true) {
+                binding.pbLoading.visibility = View.VISIBLE
+            } else {
+                binding.pbLoading.visibility = View.GONE
+            }
+        })
+
+        // Room Related
+        viewModel.tvShowsFromDB.observe(this, {
+            Logger.d(TAG, it!!.size.toString())
+        })
     }
 
     private fun refreshAdapter(items: ArrayList<TVShow>) {
@@ -60,27 +83,18 @@ class MainActivity : AppCompatActivity() {
         binding.rvHome.adapter = adapter
     }
 
-    private fun initObserves() {
-        // Retrofit Related
-        viewModel.tvShowsFromApi.observe(this) {
-            Logger.d(TAG, it.size.toString())
-            adapter.setNewTVShows(it)
-        }
+    fun callDetailsActivity(tvShow: TVShow, sharedImageView: ImageView) {
+        val intent = Intent(this, DetailsActivity::class.java)
+        intent.putExtra("show_id", tvShow.id)
+        intent.putExtra("show_img", tvShow.image_thumbnail_path)
+        intent.putExtra("show_name", tvShow.name)
+        intent.putExtra("show_network", tvShow.network)
+        intent.putExtra("iv_movie", ViewCompat.getTransitionName(sharedImageView))
 
-        viewModel.errorMessage.observe(this) {
-            Logger.d(TAG, it.toString())
-        }
-
-        viewModel.isLoading.observe(this) {
-            Logger.d(TAG, it.toString())
-            if (it) {
-                binding.pbLoading.visibility = View.VISIBLE
-            } else {
-                binding.pbLoading.visibility = View.GONE
-            }
-        }
-
-
-        // Room Related
+        val options = ActivityOptionsCompat.makeSceneTransitionAnimation(
+            this, sharedImageView, ViewCompat.getTransitionName(sharedImageView)!!
+        )
+        startActivity(intent, options.toBundle())
     }
+
 }
